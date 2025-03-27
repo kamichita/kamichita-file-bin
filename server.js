@@ -1,6 +1,6 @@
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
@@ -8,31 +8,32 @@ const PORT = 3000;
 // ファイルの保存先を指定
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "download"); // "download" フォルダに保存
+        cb(null, 'download'); // 保存フォルダ
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // ファイル名を一意に
+        cb(null, `${Date.now()}-${file.originalname}`); // 一意なファイル名を生成
     }
 });
 
 const upload = multer({ storage });
 
-// 静的ファイル配信設定
-app.use(express.static("public"));
+// 静的ファイルの配信
+app.use(express.static('public'));
+app.use('/download', express.static(path.join(__dirname, 'download')));
 
-// ファイルアップロード用エンドポイント
-app.post("/upload", upload.single("file"), (req, res) => {
+// ファイルアップロード用のエンドポイント
+app.post('/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
-        return res.status(400).send("ファイルがアップロードされていません！");
+        return res.status(400).send('アップロードされたファイルがありません。');
     }
-    const fileLink = `${req.protocol}://${req.get("host")}/download/${req.file.filename}`;
-    res.send({ 
-        message: "アップロード完了！", 
-        downloadLink: fileLink 
+    const downloadLink = `${req.protocol}://${req.get('host')}/download/${req.file.filename}`;
+    res.json({
+        message: 'アップロード成功！',
+        downloadLink
     });
 });
 
-// サーバー起動
+// サーバーを起動
 app.listen(PORT, () => {
     console.log(`サーバーが起動しました: http://localhost:${PORT}`);
 });
