@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>究極のファイルアップローダー</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --text-dark: #333;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-light);
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            flex-grow: 1;
+            border: 3px dashed var(--primary-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area.dragover {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: var(--secondary-color);
+        }
+
+        .upload-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .file-progress {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .file-progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .advanced-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .advanced-input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>究極のファイルアップローダー</h1>
+            <p>高性能で安全、シンプルなファイル共有プラットフォーム</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="dropzone">
+                <input type="file" id="fileInput" multiple style="display: none;">
+                <div>
+                    <h3>ファイルをドラッグ＆ドロップ</h3>
+                    <p>または</p>
+                    <button id="selectFileBtn" class="btn">ファイルを選択</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-options">
+            <div>
+                <strong>総ファイルサイズ:</strong> 
+                <span id="totalFileSize">0 MB</span>
+                <strong>最大: 10 GB</strong>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" id="compressFiles"> ファイル圧縮
+                </label>
+                <label>
+                    <input type="checkbox" id="encryptFiles"> ファイル暗号化
+                </label>
+            </div>
+        </div>
+
+        <div class="file-list" id="fileList">
+            <!-- ファイルリストは動的に追加されます -->
+        </div>
+
+        <div class="advanced-controls">
+            <div>
+                <h3>ダウンロードオプション</h3>
+                <input type="text" placeholder="ダウンロードキー (オプション)" 
+                       class="advanced-input" id="downloadKey">
+                <button class="btn">キー生成</button>
+            </div>
+            <div>
+                <h3>リンク短縮</h3>
+                <input type="text" placeholder="カスタムリンク" 
+                       class="advanced-input" id="customLink">
+                <button class="btn">リンク生成</button>
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🚀 高速アップロード</h4>
+                <p>マルチスレッドアップロード対応</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔒 セキュリティ</h4>
+                <p>エンドツーエンド暗号化</p>
+            </div>
+            <div class="feature-card">
+                <h4>📦 大容量対応</h4>
+                <p>最大10 GBまでアップロード可能</p>
+            </div>
+            <div class="feature-card">
+                <h4>🌐 グローバル共有</h4>
+                <p>世界中どこからでもアクセス可能</p>
+            </div>
+        </div>
+
+        <div class="upload-controls" style="margin-top: 30px;">
+            <button id="uploadBtn" class="btn btn-danger" disabled>
+                アップロード開始
+            </button>
+            <div id="overallProgress" style="margin-top: 15px;">
+                <div style="background-color: #e0e0e0; border-radius: 5px; overflow: hidden;">
+                    <div id="overallProgressBar" 
+                         style="width: 0; height: 20px; background-color: var(--secondary-color);"></div>
+                </div>
+                <p id="overallProgressText" style="text-align: center; margin-top: 10px;">
+                    アップロード準備中...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AdvancedFileUploader {
+            constructor() {
+                // DOM要素の初期化
+                this.dropzone = document.getElementById('dropzone');
+                this.fileInput = document.getElementById('fileInput');
+                this.selectFileBtn = document.getElementById('selectFileBtn');
+                this.uploadBtn = document.getElementById('uploadBtn');
+                this.fileList = document.getElementById('fileList');
+                this.totalFileSizeDisplay = document.getElementById('totalFileSize');
+                this.overallProgressBar = document.getElementById('overallProgressBar');
+                this.overallProgressText = document.getElementById('overallProgressText');
+
+                // チェックボックス
+                this.compressFilesCheckbox = document.getElementById('compressFiles');
+                this.encryptFilesCheckbox = document.getElementById('encryptFiles');
+
+                // アップロードオプション
+                this.downloadKeyInput = document.getElementById('downloadKey');
+                this.customLinkInput = document.getElementById('customLink');
+
+                // ファイル関連の変数
+                this.files = [];
+                this.maxFileSize = 10 * 1024 * 1024 * 1024; // 10 GB
+                this.totalFileSize = 0;
+
+                // イベントリスナーの設定
+                this.initEventListeners();
+            }
+
+            initEventListeners() {
+                // ドラッグ＆ドロップイベント
+                this.dropzone.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.dropzone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.dropzone.addEventListener('drop', this.handleDrop.bind(this));
+
+                // ファイル選択
+                this.selectFileBtn.addEventListener('click', () => this.fileInput.click());
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // アップロードボタン
+                this.uploadBtn.addEventListener('click', this.startUpload.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.dropzone.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.dropzone.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.dropzone.classList.remove('dragover');
+                this.processFiles(e.dataTransfer.files);
+            }
+
+            handleFileSelect(e) {
+                this.processFiles(this.fileInput.files);
+            }
+
+            processFiles(fileList) {
+                for (const file of fileList) {
+                    // 重複とサイズのチェック
+                    if (!this.files.some(f => f.name === file.name && f.size === file.size)) {
+                        // サイズチェック
+                        if (this.totalFileSize + file.size > this.maxFileSize) {
+                            alert('ファイルサイズが10 GBを超えています！');
+                            continue;
+                        }
+
+                        this.files.push(file);
+                        this.totalFileSize += file.size;
+                    }
+                }
+
+                this.updateFileList();
+            }
+
+            updateFileList() {
+                this.fileList.innerHTML = '';
+                this.totalFileSizeDisplay.textContent = 
+                    `${(this.totalFileSize / (1024 * 1024)).toFixed(2)} MB`;
+
+                this.files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.classList.add('file-item');
+
+                    fileItem.innerHTML = `
+                        <div class="file-details">
+                            <strong>${file.name}</strong>
+                            <small>${this.formatFileSize(file.size)}</small>
+                            <div class="file-progress">
+                                <div class="file-progress-bar" id="progress-${index}"></div>
+                            </div>
+                        </div>
+                        <button onclick="uploader.removeFile(${index})" class="btn btn-danger" style="margin-left: 10px;">削除</button>
+                    `;
+
+                    this.fileList.appendChild(fileItem);
+                });
+
+                // アップロードボタンの状態更新
+                this.uploadBtn.disabled = this.files.length === 0;
+            }
+
+            removeFile(index) {
+                const removedFile = this.files[index];
+                this.totalFileSize -= removedFile.size;
+                this.files.splice(index, 1);
+                this.updateFileList();
+            }
+
+            formatFileSize(bytes) {
+                const units = ['Bytes', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+
+                return `${size.toFixed(2)} ${units[unitIndex]}`;
+            }
+
+            async startUpload() {
+                if (this.files.length === 0) return;
+
+                // アップロード前の追加オプション確認
+                const willCompress = this.compressFilesCheckbox.checked;
+                const willEncrypt = this.encryptFilesCheckbox.checked;
+                const downloadKey = this.downloadKeyInput.value || this.generateRandomKey();
+                const customLink = this.customLinkInput.value || this.generateShortLink();
+
+                // 進捗表示のリセット
+                this.overallProgressBar.style.width = '0%';
+                this.overallProgressText.textContent = 'アップロード準備中...';
+
+                // シミュレーション用のアップロード処理
+                for (let i = 0; i < this.files.length; i++) {
+                    const file = this.files[i];
+                    const progressBar = document.getElementById(`progress-${i}`);
+
+                    await this.simulateFileUpload(file, progressBar, i);
+                }
+
+                // 全体の進捗更新
+                this.overallProgressBar.style.width = '100%';
+                this.overallProgressText.textContent = 
+                    `アップロード完了！ダウンロードキー: ${downloadKey}`;
+            }
+
+            simulateFileUpload(file, progressBar, index) {
+                return new Promise((resolve) => {
+                    let progress = 0;
+                    const uploadInterval = setInterval(() => {
+                        progress += Math.random() * 20;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(uploadInterval);
+                            resolve();
+                        }
+                        progressBar.style.width = `${progress}%`;
+                        this.updateOverallProgress();
+                    }, 200);
+                });
+            }
+
+            updateOverallProgress() {
+                const individualProgresses = 
+                    Array.from(document.querySelectorAll('.file-progress-bar'))
+                    .map(bar => parseFloat(bar.style.width) || 0);
+                
+                const averageProgress = 
+                    individualProgresses.reduce((a, b) => a + b, 0) / individualProgresses.length;
+                
+                this.overallProgressBar.style.width = `${averageProgress}%`;
+                this.overallProgressText.textContent = 
+                    `アップロード中... ${averageProgress.toFixed(0)}%`;
+            }
+
+            generateRandomKey(length = 8) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                return Array.from(crypto.getRandomValues(new Uint32Array(length)))
+                    .map(x => chars[x % chars.length])
+                    .join('');
+            }
+
+            generateShortLink() {
+                return `https://short.link/${this.generateRandomKey(6)}`;
+            }
+        }
+
+        // グローバルオブジェクトとして公開
+        const uploader = new AdvancedFileUploader();
+    </script>
+</body>
+</html>
