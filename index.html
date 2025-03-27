@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイルアップローダー</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        .upload-box { border: 2px dashed #3498db; padding: 20px; width: 80%; max-width: 500px; margin: auto; cursor: pointer; }
+        .progress { width: 100%; background: #ddd; margin-top: 10px; }
+        .progress-bar { width: 0%; height: 20px; background: #3498db; text-align: center; line-height: 20px; color: white; }
+        .link-box { margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>ファイルアップローダー</h1>
+    <label class="upload-box" id="upload-box">ここにファイルをドラッグ または クリック
+        <input type="file" id="file-input" multiple hidden>
+    </label>
+    <div class="progress"><div class="progress-bar" id="progress-bar">0%</div></div>
+    <div class="link-box" id="link-box">
+        <p>ダウンロードリンク: <a id="download-link" href="#" target="_blank"></a></p>
+        <p>短縮URL: <a id="short-url" href="#" target="_blank"></a></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
