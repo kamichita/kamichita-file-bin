@@ -1,56 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>高性能ファイルアップローダー</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .uploader { margin-bottom: 20px; }
-        .uploader button { margin-top: 10px; padding: 10px; font-size: 16px; }
-        .output { margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .upload-box {
+            border: 2px dashed #3498db;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            margin: auto;
+            cursor: pointer;
+        }
+        #file-input {
+            display: none;
+        }
+        .progress {
+            width: 100%;
+            background: #ddd;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background: #3498db;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+        .link-box {
+            margin-top: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
+
     <h1>高性能ファイルアップローダー</h1>
-    <div class="uploader">
-        <input type="file" id="fileInput" multiple />
-        <button id="uploadButton">アップロード</button>
+    <label class="upload-box" id="upload-box">
+        ここにファイルをドラッグ または クリック
+        <input type="file" id="file-input" multiple>
+    </label>
+    <div class="progress">
+        <div class="progress-bar" id="progress-bar">0%</div>
     </div>
-    <div id="output" class="output"></div>
+    <div class="link-box" id="link-box">
+        <p>ダウンロードリンク: <a id="download-link" href="#" target="_blank"></a></p>
+        <p>削除キー: <span id="delete-key"></span></p>
+    </div>
 
     <script>
-        document.getElementById('uploadButton').addEventListener('click', async () => {
-            const files = document.getElementById('fileInput').files;
-            if (files.length === 0) {
-                alert("ファイルを選択してください！");
-                return;
-            }
+        const uploadBox = document.getElementById("upload-box");
+        const fileInput = document.getElementById("file-input");
+        const progressBar = document.getElementById("progress-bar");
+        const linkBox = document.getElementById("link-box");
+        const downloadLink = document.getElementById("download-link");
+        const deleteKeyEl = document.getElementById("delete-key");
 
-            for (let file of files) {
-                const formData = new FormData();
-                formData.append('file', file);
+        uploadBox.addEventListener("click", () => fileInput.click());
 
-                try {
-                    const response = await fetch('/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        document.getElementById('output').innerHTML += `
-                            <p>ファイル名: ${file.name}<br>
-                            ダウンロードリンク: <a href="${result.downloadLink}" target="_blank">${result.downloadLink}</a></p>`;
-                    } else {
-                        alert('アップロードに失敗しました。');
-                    }
-                } catch (error) {
-                    console.error('アップロードエラー:', error);
-                    alert('エラーが発生しました。');
-                }
+        fileInput.addEventListener("change", (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                uploadFiles(files);
             }
         });
+
+        function uploadFiles(files) {
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append("file", files[i]);
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://your-backend.com/upload", true);
+
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percent + "%";
+                    progressBar.textContent = percent + "%";
+                }
+            };
+
+            xhr.onload = function () {
+                if (xhr.status == 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    downloadLink.href = response.downloadUrl;
+                    downloadLink.textContent = response.downloadUrl;
+                    deleteKeyEl.textContent = response.deleteKey;
+                    linkBox.style.display = "block";
+                } else {
+                    alert("アップロードに失敗しました。");
+                }
+            };
+
+            xhr.send(formData);
+        }
     </script>
+
 </body>
 </html>
