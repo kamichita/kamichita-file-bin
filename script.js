@@ -9,7 +9,7 @@ document.getElementById('uploadButton').addEventListener('click', () => {
     Array.from(files).forEach(file => {
         console.log(`Uploading: ${file.name}`);
         // ここでアップロード処理を行う
-        const link = `https://example.com/download/${file.name}`;
+        const link = `https://kamichita-file-bin.pages.dev/download/${file.name}`;
         const downloadKey = Math.random().toString(36).substr(2, 8);
         document.getElementById('links').innerHTML += `
             <p>ファイル名: ${file.name} <br> リンク: <a href="${link}" target="_blank">${link}</a> <br> ダウンロードキー: ${downloadKey}</p>
